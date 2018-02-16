@@ -6,7 +6,7 @@ layer {
     scale: 0.00392156885937
   }
   data_param {
-    source: "/home/mondejar/markers_end2end/markers_img_LMDB"
+    source: "/home/mondejar/markers_end2end/LMDB/markers_img_LMDB"
     batch_size: 100
     backend: LMDB
   }
@@ -16,7 +16,7 @@ layer {
   type: "Data"
   top: "label"
   data_param {
-    source: "/home/mondejar/markers_end2end/markers_labels_LMDB"
+    source: "/home/mondejar/markers_end2end/LMDB/markers_labels_LMDB"
     batch_size: 100
     backend: LMDB
   }

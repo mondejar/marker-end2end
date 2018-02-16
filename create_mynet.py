@@ -32,5 +32,5 @@ def my_net(data_lmdb, label_lmdb, batch_size):
     return n.to_proto()
     
 with open('/home/mondejar/markers_end2end/my_net_auto_train.prototxt', 'w') as f:
-    f.write(str(my_net('/home/mondejar/markers_end2end/markers_img_LMDB', '/home/mondejar/markers_end2end/markers_labels_LMDB', 100)))
+    f.write(str(my_net('/home/mondejar/markers_end2end/LMDB/markers_img_LMDB', '/home/mondejar/markers_end2end/LMDB/markers_labels_LMDB', 100)))
     

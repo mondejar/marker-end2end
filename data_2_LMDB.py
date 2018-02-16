@@ -18,6 +18,7 @@ import numpy as np
 import lmdb
 import cv2
 import shutil
+import os 
 
 marker_size = 64
 datasetFile = '/home/mondejar/markers_end2end/data/data_64/train_data_list.txt'
@@ -55,12 +56,18 @@ map_size_labels  = Y.nbytes * 10
 # for image and labels
 
 
+img_LMDB_name = 'LMDB/markers_img_LMDB'
+label_LMDB_name = 'LMDB/markers_labels_LMDB'
 
-shutil.rmtree('markers_img_LMDB')
-shutil.rmtree('markers_labels_LMDB')
+# if exist
+if os.path.exists(img_LMDB_name):
+    shutil.rmtree(img_LMDB_name)
 
-images_db = lmdb.open('markers_img_LMDB', map_size=map_size_images)
-labels_db = lmdb.open('markers_labels_LMDB', map_size=map_size_labels)
+if os.path.exists(label_LMDB_name):
+    shutil.rmtree(label_LMDB_name)
+
+images_db = lmdb.open(img_LMDB_name, map_size=map_size_images)
+labels_db = lmdb.open(label_LMDB_name, map_size=map_size_labels)
 
 images_txn = images_db.begin(write=True)
 labels_txn = labels_db.begin(write=True)
