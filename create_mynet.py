@@ -27,6 +27,9 @@ def my_net(data_lmdb, label_lmdb, batch_size):
     n.relu1 = L.ReLU(n.fc1, in_place=True)
     
     n.score = L.InnerProduct(n.relu1, num_output=8, weight_filler=dict(type='xavier'))
+
+    # Added to compare with n.label!
+    #n.score.reshape(batch_size, 1, 1, 8)
     n.loss =  L.EuclideanLoss(n.score, n.label)
     
     return n.to_proto()

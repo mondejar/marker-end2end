@@ -32,7 +32,8 @@ N = len(content)
 
 # Let's pretend this is interesting data
 X = np.zeros((N, 1, marker_size, marker_size), dtype=np.uint8)
-Y = np.zeros((N, 8), dtype=np.float32)
+Y = np.zeros((N, 1, 1, 8), dtype=np.float32)
+
 
 # Read the dataset and set in X,y variables
 for i in range(0, len(content)):
@@ -43,7 +44,7 @@ for i in range(0, len(content)):
     X[i,0] = img
 
     for j in range(1,9):
-        Y[i, j-1] = float(line_splitted[j])
+        Y[i, 0, 0, j-1] = float(line_splitted[j])
 
 # We need to prepare the database for the size. We'll set it 10 times
 # greater than what we theoretically need. There is little drawback to
@@ -94,9 +95,13 @@ for i in range(0,N):
     images_txn.put(str_id.encode('ascii'), datum_img.SerializeToString())
 
     # Labels
-    datum_label = caffe.proto.caffe_pb2.Datum()
-    datum_label.channels = Y.shape[1]
-    datum_label.data = Y[i].tobytes()  # or .tostring() if numpy < 1.9
+    #datum_label = caffe.proto.caffe_pb2.Datum()
+    #datum_label.channels = 1
+    #datum_img.height = 1
+    #datum_img.width = Y.shape[1]
+    #datum_label.data = Y[i].tobytes()  # or .tostring() if numpy < 1.9
+
+    datum_label = caffe.io.array_to_datum(Y[i], 1)
     labels_txn.put(str_id.encode('ascii'), datum_label.SerializeToString())
 
     # write batch

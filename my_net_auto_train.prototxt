@@ -2,6 +2,7 @@ layer {
   name: "data"
   type: "Data"
   top: "data"
+  top: "data2"
   transform_param {
     scale: 0.00392156885937
   }
@@ -15,6 +16,7 @@ layer {
   name: "label"
   type: "Data"
   top: "label"
+  top: "label2"
   data_param {
     source: "/home/mondejar/markers_end2end/LMDB/markers_labels_LMDB"
     batch_size: 100
@@ -99,10 +101,19 @@ layer {
     }
   }
 }
+
+layer {
+  name: "score_rsh"
+  type: "Reshape"
+  bottom: "score"
+  top: "score_rsh"
+  reshape_param { shape: {dim: 100 dim: 1 dim: 1 dim: 8 } }
+}
+
 layer {
   name: "loss"
   type: "EuclideanLoss"
-  bottom: "score"
+  bottom: "score_rsh"
   bottom: "label"
   top: "loss"
 }
