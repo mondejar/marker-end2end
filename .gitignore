@@ -1,3 +1,4 @@
 data/*
 LMDB/*
 caffe/*
+net_snapshot/*

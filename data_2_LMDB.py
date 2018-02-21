@@ -44,7 +44,7 @@ for i in range(0, len(content)):
     X[i,0] = img
 
     for j in range(1,9):
-        Y[i, 0, 0, j-1] = float(line_splitted[j])
+        Y[i, 0, 0, j-1] = float(line_splitted[j]) / float(marker_size)
 
 # We need to prepare the database for the size. We'll set it 10 times
 # greater than what we theoretically need. There is little drawback to
@@ -90,7 +90,7 @@ for i in range(0,N):
     """
     # datum.label = Y[i]  # only admits an int value
     str_id = '{:08}'.format(i)
-    datum_img = caffe.io.array_to_datum(X[i],1)
+    datum_img = caffe.io.array_to_datum(X[i], 1) #, label_value
     # The encode is only essential in Python 3
     images_txn.put(str_id.encode('ascii'), datum_img.SerializeToString())
 
@@ -101,7 +101,7 @@ for i in range(0,N):
     #datum_img.width = Y.shape[1]
     #datum_label.data = Y[i].tobytes()  # or .tostring() if numpy < 1.9
 
-    datum_label = caffe.io.array_to_datum(Y[i], 1)
+    datum_label = caffe.io.array_to_datum(Y[i], 1) #, label_value
     labels_txn.put(str_id.encode('ascii'), datum_label.SerializeToString())
 
     # write batch

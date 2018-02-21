@@ -29,32 +29,21 @@ layer {
   bottom: "data"
   top: "conv1"
   convolution_param {
-    num_output: 20
-    kernel_size: 5
+    num_output: 64
+    kernel_size: 3
     weight_filler {
       type: "xavier"
     }
   }
 }
 layer {
-  name: "pool1"
-  type: "Pooling"
-  bottom: "conv1"
-  top: "pool1"
-  pooling_param {
-    pool: MAX
-    kernel_size: 2
-    stride: 2
-  }
-}
-layer {
   name: "conv2"
   type: "Convolution"
-  bottom: "pool1"
+  bottom: "conv1"
   top: "conv2"
   convolution_param {
-    num_output: 50
-    kernel_size: 5
+    num_output: 64
+    kernel_size: 3
     weight_filler {
       type: "xavier"
     }
@@ -67,14 +56,107 @@ layer {
   top: "pool2"
   pooling_param {
     pool: MAX
-    kernel_size: 2
+    kernel_size: 3
     stride: 2
   }
 }
 layer {
+  name: "conv3"
+  type: "Convolution"
+  bottom: "pool2"
+  top: "conv3"
+  convolution_param {
+    num_output: 64
+    kernel_size: 3
+    weight_filler {
+      type: "xavier"
+    }
+  }
+}
+layer {
+  name: "conv4"
+  type: "Convolution"
+  bottom: "conv3"
+  top: "conv4"
+  convolution_param {
+    num_output: 64
+    kernel_size: 3
+    weight_filler {
+      type: "xavier"
+    }
+  }
+}
+layer {
+  name: "pool4"
+  type: "Pooling"
+  bottom: "conv4"
+  top: "pool4"
+  pooling_param {
+    pool: MAX
+    kernel_size: 3
+    stride: 2
+  }
+}
+layer {
+  name: "conv5"
+  type: "Convolution"
+  bottom: "pool4"
+  top: "conv5"
+  convolution_param {
+    num_output: 128
+    kernel_size: 3
+    weight_filler {
+      type: "xavier"
+    }
+  }
+}
+layer {
+  name: "conv6"
+  type: "Convolution"
+  bottom: "conv5"
+  top: "conv6"
+  convolution_param {
+    num_output: 128
+    kernel_size: 3
+    weight_filler {
+      type: "xavier"
+    }
+  }
+}
+layer {
+  name: "pool6"
+  type: "Pooling"
+  bottom: "conv6"
+  top: "pool6"
+  pooling_param {
+    pool: MAX
+    kernel_size: 3
+    stride: 2
+  }
+}
+layer {
+  name: "conv7"
+  type: "Convolution"
+  bottom: "pool6"
+  top: "conv7"
+  convolution_param {
+    num_output: 128
+    kernel_size: 3
+    weight_filler {
+      type: "xavier"
+    }
+  }
+}
+layer {
+  name: "drop8"
+  type: "Dropout"
+  bottom: "conv7"
+  top: "conv7"
+}
+layer {
   name: "fc1"
   type: "InnerProduct"
-  bottom: "pool2"
+  bottom: "conv7"
   top: "fc1"
   inner_product_param {
     num_output: 500
@@ -82,12 +164,6 @@ layer {
       type: "xavier"
     }
   }
-}
-layer {
-  name: "relu1"
-  type: "ReLU"
-  bottom: "fc1"
-  top: "fc1"
 }
 layer {
   name: "score"
@@ -101,19 +177,10 @@ layer {
     }
   }
 }
-
-layer {
-  name: "score_rsh"
-  type: "Reshape"
-  bottom: "score"
-  top: "score_rsh"
-  reshape_param { shape: {dim: 100 dim: 1 dim: 1 dim: 8 } }
-}
-
 layer {
   name: "loss"
   type: "EuclideanLoss"
-  bottom: "score_rsh"
+  bottom: "score"
   bottom: "label"
   top: "loss"
 }
