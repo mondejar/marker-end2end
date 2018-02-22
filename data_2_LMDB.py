@@ -21,8 +21,8 @@ import shutil
 import os 
 
 marker_size = 64
-datasetFile = '/home/mondejar/markers_end2end/data/data_64/train_data_list.txt'
-dirBase = '/home/mondejar/markers_end2end/data/'
+datasetFile = '/home/mondejar/markers_end2end/data/data_64_simp/train_data_list.txt'
+dirBase = '/home/mondejar/markers_end2end/'
 
 fileDB = open(datasetFile,'r') 
 content = fileDB.readlines()
@@ -120,7 +120,4 @@ if (item_id+1) % batch_size != 0:
     labels_txn.commit()
     print 'last batch'
     print (item_id + 1)
-
-
-
 

@@ -26,12 +26,12 @@ python marker_dataset_path img_dataset_path number_transforms patch_size
 				
 Example call:
 
-python create_dataset.py /home/mondejar/dataset/markers/ /home/mondejar/dataset/mirflickr/ 500 128
+python create_dataset.py /home/mondejar/dataset/markers/ /home/mondejar/dataset/mirflickr/ 30000 64
 """
 
 # Params
-outImPath = 'data_64/train_data/' #'data_simplified/train_data/'						# Dir in which the new patches are saved 
-trainFilename = 'data_64/train_data_list.txt' # 'data_simplified/train_data_list.txt'  # Full file path referencing the patches and ground truth
+outImPath = 'data/data_64_simp/train_data/' #'data_simplified/train_data/'						# Dir in which the new patches are saved 
+trainFilename = 'data/data_64_simp/train_data_list.txt' # 'data_simplified/train_data_list.txt'  # Full file path referencing the patches and ground truth
 verbose = False 																	# set True to display the process
 
 # Generate a random affine transform over the four corners
@@ -109,10 +109,10 @@ def main(argv):
 	if len(argv) < 5:
 		print 'Error, incorrect number of args:\n python create_dataset.py marker_dataset_path img_dataset_path number_transforms patch_size\n'
 		sys.exit(1)
-
+	"""
 	if not os.path.exists(outImPath):
 		os.mkdir(outImPath)
-	"""
+	
 	marker_dataset 	= argv[1]  #'/home/mondejar/dataset/markers/'  	# Dir that contains the original markers
 	img_dataset 	= argv[2] #'/home/mondejar/dataset/mirflickr/' 	# Dir that contains the background images
 	numWarps 		= int(argv[3]) 	#100 number of warps per marker
@@ -140,7 +140,7 @@ def main(argv):
 				train_img = cv2.resize(back_img, (patchSize, patchSize)) 				
 				
 				# Scale the marker at some size between 10-50% of the specified size
-				scale_factor = random.uniform(0.1, 0.5)
+				scale_factor = random.uniform(0.4, 0.8)#0.1, 0.5
 				marker_size = int(patchSize * scale_factor)
 				marker_scale = cv2.resize(marker_orig, (marker_size, marker_size))
 
@@ -154,7 +154,7 @@ def main(argv):
 				# Ilumination? non uniform?
 
 				# affine transform
-				marker_affin, persT, mask_perspect, gt_corners = affine_transform(marker_size, marker_scale, 0.4) #0.001
+				marker_affin, persT, mask_perspect, gt_corners = affine_transform(marker_size, marker_scale, 0.001)#0.4)
 
 				rows_marker, cols_marker = marker_affin.shape
 			    # and place randomly over the background image

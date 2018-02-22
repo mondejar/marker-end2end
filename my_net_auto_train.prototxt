@@ -32,27 +32,14 @@ layer {
     num_output: 64
     kernel_size: 3
     weight_filler {
-      type: "xavier"
-    }
-  }
-}
-layer {
-  name: "conv2"
-  type: "Convolution"
-  bottom: "conv1"
-  top: "conv2"
-  convolution_param {
-    num_output: 64
-    kernel_size: 3
-    weight_filler {
-      type: "xavier"
+      type: "constant"
     }
   }
 }
 layer {
   name: "pool2"
   type: "Pooling"
-  bottom: "conv2"
+  bottom: "conv1"
   top: "pool2"
   pooling_param {
     pool: MAX
@@ -69,27 +56,14 @@ layer {
     num_output: 64
     kernel_size: 3
     weight_filler {
-      type: "xavier"
-    }
-  }
-}
-layer {
-  name: "conv4"
-  type: "Convolution"
-  bottom: "conv3"
-  top: "conv4"
-  convolution_param {
-    num_output: 64
-    kernel_size: 3
-    weight_filler {
-      type: "xavier"
+      type: "constant"
     }
   }
 }
 layer {
   name: "pool4"
   type: "Pooling"
-  bottom: "conv4"
+  bottom: "conv3"
   top: "pool4"
   pooling_param {
     pool: MAX
@@ -106,27 +80,14 @@ layer {
     num_output: 128
     kernel_size: 3
     weight_filler {
-      type: "xavier"
-    }
-  }
-}
-layer {
-  name: "conv6"
-  type: "Convolution"
-  bottom: "conv5"
-  top: "conv6"
-  convolution_param {
-    num_output: 128
-    kernel_size: 3
-    weight_filler {
-      type: "xavier"
+      type: "constant"
     }
   }
 }
 layer {
   name: "pool6"
   type: "Pooling"
-  bottom: "conv6"
+  bottom: "conv5"
   top: "pool6"
   pooling_param {
     pool: MAX
@@ -143,15 +104,9 @@ layer {
     num_output: 128
     kernel_size: 3
     weight_filler {
-      type: "xavier"
+      type: "constant"
     }
   }
-}
-layer {
-  name: "drop8"
-  type: "Dropout"
-  bottom: "conv7"
-  top: "conv7"
 }
 layer {
   name: "fc1"
@@ -159,9 +114,9 @@ layer {
   bottom: "conv7"
   top: "fc1"
   inner_product_param {
-    num_output: 500
+    num_output: 1024
     weight_filler {
-      type: "xavier"
+      type: "constant"
     }
   }
 }
@@ -173,7 +128,7 @@ layer {
   inner_product_param {
     num_output: 8
     weight_filler {
-      type: "xavier"
+      type: "constant"
     }
   }
 }

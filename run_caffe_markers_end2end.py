@@ -11,7 +11,7 @@ from caffe import layers as L, params as P
 import cv2
 from draw_corners_on_marker import *
 
-batch_size = 100
+batch_size = 64
 
 caffe.set_device(0)
 
@@ -41,10 +41,12 @@ for iteration in range(0, iter_max):
     #solver.test_nets[0].forward()  # test net (there can be more than one)
     solver.net.backward()
 
+    if iteration % 1000 == 0:
+        print("__________\n\tIter " + str(iteration) + " loss: " + str(solver.net.blobs['loss'].data))
+
     if iteration % 5000 == 0:
+        print("Saving caffemodel...")
         solver.net.save('net_snapshot/net.caffemodel') 
-        print("Iter " + str(iteration) + " loss: ")
-        print(solver.net.blobs['loss'])
 
 
 # we use a little trick to tile the first eight images

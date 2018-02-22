@@ -13,30 +13,30 @@ def my_net(data_lmdb, label_lmdb, batch_size):
     # our version of LeNet: a series of linear and simple nonlinear transformations
     n = caffe.NetSpec()
     
-    n.data, n.data2  = L.Data(batch_size=batch_size, backend=P.Data.LMDB, source=data_lmdb, transform_param=dict(scale=1./255), ntop=2)
+    n.data, n.data2  = L.Data(batch_size=batch_size, backend=P.Data.LMDB, source=data_lmdb, transform_param=dict(scale=1./255), ntop=2) # 
     n.label, n.label2  = L.Data(batch_size=batch_size, backend=P.Data.LMDB, source=label_lmdb, ntop=2)
 
-    n.conv1 = L.Convolution(n.data, kernel_size=3, num_output=64, weight_filler=dict(type='xavier'))
-    n.conv2 = L.Convolution(n.conv1,kernel_size=3, num_output=64, weight_filler=dict(type='xavier'))
-    n.pool2 = L.Pooling(n.conv2,    kernel_size=3, stride=2, pool=P.Pooling.MAX)
+    n.conv1 = L.Convolution(n.data, kernel_size=3, num_output=64, weight_filler=dict(type='constant')) #'xavier'
+    #n.conv2 = L.Convolution(n.conv1,kernel_size=3, num_output=64, weight_filler=dict(type='xavier'))
+    n.pool2 = L.Pooling(n.conv1,    kernel_size=3, stride=2, pool=P.Pooling.MAX)
 
-    n.conv3 = L.Convolution(n.pool2,kernel_size=3, num_output=64, weight_filler=dict(type='xavier'))
-    n.conv4 = L.Convolution(n.conv3,kernel_size=3, num_output=64, weight_filler=dict(type='xavier'))
-    n.pool4 = L.Pooling(n.conv4,    kernel_size=3, stride=2, pool=P.Pooling.MAX)
+    n.conv3 = L.Convolution(n.pool2,kernel_size=3, num_output=64, weight_filler=dict(type='constant'))
+    #n.conv4 = L.Convolution(n.conv3,kernel_size=3, num_output=64, weight_filler=dict(type='xavier'))
+    n.pool4 = L.Pooling(n.conv3,    kernel_size=3, stride=2, pool=P.Pooling.MAX)
 
-    n.conv5 = L.Convolution(n.pool4,kernel_size=3, num_output=128, weight_filler=dict(type='xavier'))
-    n.conv6 = L.Convolution(n.conv5,kernel_size=3, num_output=128, weight_filler=dict(type='xavier'))
-    n.pool6 = L.Pooling(n.conv6,    kernel_size=3, stride=2, pool=P.Pooling.MAX)
+    n.conv5 = L.Convolution(n.pool4,kernel_size=3, num_output=128, weight_filler=dict(type='constant'))
+    #n.conv6 = L.Convolution(n.conv5,kernel_size=3, num_output=128, weight_filler=dict(type='xavier'))
+    n.pool6 = L.Pooling(n.conv5,    kernel_size=3, stride=2, pool=P.Pooling.MAX)
 
-    n.conv7 = L.Convolution(n.pool6,kernel_size=3, num_output=128, weight_filler=dict(type='xavier'))
+    n.conv7 = L.Convolution(n.pool6,kernel_size=3, num_output=128, weight_filler=dict(type='constant'))
     #n.conv8 = L.Convolution(n.conv7,kernel_size=3, num_output=128, weight_filler=dict(type='xavier'))
  
-    n.drop8 = L.Dropout(n.conv7, in_place=True)
+    #n.drop8 = L.Dropout(n.conv7, in_place=True)
     # Dropout
 
-    n.fc1 =   L.InnerProduct(n.drop8, num_output=500, weight_filler=dict(type='xavier'))
+    n.fc1 =   L.InnerProduct(n.conv7, num_output=1024, weight_filler=dict(type='constant'))
     #n.relu1 = L.ReLU(n.fc1, in_place=True)
-    n.score = L.InnerProduct(n.fc1, num_output=8, weight_filler=dict(type='xavier'))
+    n.score = L.InnerProduct(n.fc1, num_output=8, weight_filler=dict(type='constant'))
 
     n.loss =  L.EuclideanLoss(n.score, n.label)
 
@@ -66,5 +66,5 @@ def my_net(data_lmdb, label_lmdb, batch_size):
     return n.to_proto()
     
 with open('/home/mondejar/markers_end2end/my_net_auto_train.prototxt', 'w') as f:
-    f.write(str(my_net('/home/mondejar/markers_end2end/LMDB/markers_img_LMDB', '/home/mondejar/markers_end2end/LMDB/markers_labels_LMDB', 100)))
+    f.write(str(my_net('/home/mondejar/markers_end2end/LMDB/markers_img_LMDB', '/home/mondejar/markers_end2end/LMDB/markers_labels_LMDB', 64)))
     
