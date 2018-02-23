@@ -63,7 +63,7 @@ for b in range(0, batch_size):
 
     # Draw Output
     im = np.array(solver.net.blobs['data'].data[b].reshape(64,64))
-    im_pred = draw_corners_on_marker(im, predicted_coor * 255.0)
+    im_pred = draw_corners_on_marker(im, predicted_coor * 64.0)
     
     cv2.namedWindow('img', cv2.WINDOW_NORMAL)
     cv2.imshow('img', im_pred)

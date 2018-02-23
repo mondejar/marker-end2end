@@ -1,16 +1,5 @@
-Cambiar del my_net prototxt
-lo de data2 y label2
+Cambiar a mano
 
+.prototxt
 
-Reshape final score to compatible with label 
-
-batch_size, 8 -> batch_size, 1, 1, 8
-
-layer {
-  name: "my_reshape"
-  type: "Reshape"
-  bottom: "score"
-  top: "my_reshape"
-  reshape_param { shape: {dim: 100 dim: 1 dim: 1 dim: 8 } }
-}
-
+test_data = data

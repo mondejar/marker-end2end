@@ -8,7 +8,7 @@
             "request": "launch",
             "stopOnEntry": true,
             "pythonPath": "${config:python.pythonPath}",
-            "program": "/home/mondejar/markers_end2end/run_caffe_markers_end2end.py",
+            "program": "/home/mondejar/markers_end2end/create_dataset.py",
             "cwd": "${workspaceRoot}",
             "env": {},
             "envFile": "${workspaceRoot}/.env",

@@ -14,6 +14,7 @@ from os.path import isfile, join
 import os
 import random
 import sys
+from draw_corners_on_marker import *
 
 """ 
 This code prepares the data for train the model.
@@ -26,19 +27,21 @@ python marker_dataset_path img_dataset_path number_transforms patch_size
 				
 Example call:
 
-python create_dataset.py /home/mondejar/dataset/markers/ /home/mondejar/dataset/mirflickr/ 30000 64
 """
 
-# Params
-outImPath = 'data/data_64_simp/train_data/' #'data_simplified/train_data/'						# Dir in which the new patches are saved 
-trainFilename = 'data/data_64_simp/train_data_list.txt' # 'data_simplified/train_data_list.txt'  # Full file path referencing the patches and ground truth
-verbose = False 																	# set True to display the process
 
 # Generate a random affine transform over the four corners
-def affine_transform( patchSize, img, randomDispFactor ):
+def affine_transform( patchSize, white_border_factor, img, randomDispFactor ):
 	
+	# 0.115
+	white_border = white_border_factor * patchSize
+
+	# To save the correct GT (black borders)
+	black_corners = np.array([[white_border, white_border], [white_border, patchSize-white_border], [patchSize-white_border, white_border], [patchSize-white_border, patchSize-white_border]], dtype='float32')
+	 
+	# To warp the full imagen (including white borders)
 	corners = np.float32([[0, 0], [0, patchSize], [patchSize, 0], [patchSize, patchSize]])
-	cornersT = np.float32([[1, 1], [1, 1], [1, 1], [1, 1]])
+	cornersT = np.float32([[0, 0], [0, 0], [0, 0], [0, 0]])
 
 	w = int(round(randomDispFactor * patchSize))
 	h = int(round(randomDispFactor * patchSize))
@@ -64,7 +67,12 @@ def affine_transform( patchSize, img, randomDispFactor ):
 	mask_perspect = np.zeros((patchSize, patchSize, 1), dtype = "uint8") + 255
 	mask_perspect = cv2.warpPerspective(mask_perspect, persT, (maxW, maxH))
 
-	return warpImg, persT, mask_perspect, cornersT
+
+	black_corners = np.array([black_corners])
+	black_cornersT = cv2.perspectiveTransform(black_corners, persT)
+
+
+	return warpImg, persT, mask_perspect, cornersT, black_cornersT[0]
 
 def dynamic_range_compression(img):
 	
@@ -103,33 +111,35 @@ def merge_images(train_img, x_pos, y_pos, marker_affin, mask_perspect):
 
 	return train_img
 
-def main(argv):
+def create_dataset(marker_dataset, img_dataset, numWarps, patchSize, outImPath, valFilename, trainFilename, verbose):
 
-	"""
-	if len(argv) < 5:
-		print 'Error, incorrect number of args:\n python create_dataset.py marker_dataset_path img_dataset_path number_transforms patch_size\n'
-		sys.exit(1)
-	"""
 	if not os.path.exists(outImPath):
 		os.mkdir(outImPath)
-	
-	marker_dataset 	= argv[1]  #'/home/mondejar/dataset/markers/'  	# Dir that contains the original markers
-	img_dataset 	= argv[2] #'/home/mondejar/dataset/mirflickr/' 	# Dir that contains the background images
-	numWarps 		= int(argv[3]) 	#100 number of warps per marker
-	patchSize 		= int(argv[4]) 	#128 patch size of the resultant image
+
+	if not os.path.exists(outImPath + 'train_data'):
+		os.mkdir(outImPath + 'train_data')
+
+	if not os.path.exists(outImPath + 'val_data'):
+		os.mkdir(outImPath + 'val_data')
+
 
 	# create file
-	fileList = open(trainFilename,'w') 
+	fileList_Train = open(trainFilename,'w') 
+	fileList_Val = open(valFilename,'w') 
+
 	imMarkers = [f for f in listdir(marker_dataset) if isfile(join(marker_dataset, f))]
 	imBackgrounds = [f for f in listdir(img_dataset) if isfile(join(img_dataset, f))]
 	
 	numIm = 0
+
+	train_val_factor = 0.1 # 10% of the warps are employed for validation
+
 	for imMarker in imMarkers:
 		# Read marker
 		print(marker_dataset + imMarker)
 		marker_orig = cv2.imread(marker_dataset + imMarker, 0)
 
-		for w in range(0,numWarps):
+		for w in range(0, numWarps):
 
 			# Pick a random background image
 			imBackground = random.choice(imBackgrounds)
@@ -140,7 +150,7 @@ def main(argv):
 				train_img = cv2.resize(back_img, (patchSize, patchSize)) 				
 				
 				# Scale the marker at some size between 10-50% of the specified size
-				scale_factor = random.uniform(0.4, 0.8)#0.1, 0.5
+				scale_factor = random.uniform(0.3, 0.5)#0.1, 0.5
 				marker_size = int(patchSize * scale_factor)
 				marker_scale = cv2.resize(marker_orig, (marker_size, marker_size))
 
@@ -154,7 +164,8 @@ def main(argv):
 				# Ilumination? non uniform?
 
 				# affine transform
-				marker_affin, persT, mask_perspect, gt_corners = affine_transform(marker_size, marker_scale, 0.001)#0.4)
+				white_border_factor = 0.115
+				marker_affin, persT, mask_perspect, image_corners, gt_corners = affine_transform(marker_size, white_border_factor, marker_scale, 0.25)#0.4)
 
 				rows_marker, cols_marker = marker_affin.shape
 			    # and place randomly over the background image
@@ -168,29 +179,66 @@ def main(argv):
 				gt_corners[:,0] = gt_corners[:,0] + x_pos
 				gt_corners[:,1] = gt_corners[:,1] + y_pos
 
+				# Last  numWarps - (train_val_factor * numWarps) for validation
+				if w > (numWarps - (train_val_factor * numWarps)):
+					nameTrainImg = outImPath + 'val_data/' + imMarker[:-5] + "_" + str(w) + '.png'
+
+					# add line to file
+					fileList_Val.write( nameTrainImg)
+					for p in range(0, 4):	
+						fileList_Val.write(' ' + str(gt_corners[p][0]) + ' ' + str(gt_corners[p][1]))
+					fileList_Val.write('\n')
+
+				else:
+					nameTrainImg = outImPath + 'train_data/' + imMarker[:-5] + "_" + str(w) + '.png'
+
+					# add line to file
+					fileList_Train.write( nameTrainImg)
+					for p in range(0, 4):	
+						fileList_Train.write(' ' + str(gt_corners[p][0]) + ' ' + str(gt_corners[p][1]))
+					fileList_Train.write('\n')	
 
 				# Export patch warp
-				nameTrainImg = outImPath + imMarker[:-5] + "_" + str(w) + '.png'
 				cv2.imwrite( nameTrainImg, train_img)	
 
-				# add line to file
-				fileList.write( nameTrainImg)
-				for p in range(0, 4):	
-					fileList.write(' ' + str(gt_corners[p][0]) + ' ' + str(gt_corners[p][1]))
-				fileList.write('\n')
-
 				# Write .bin files for use with caffe 
-
 				if verbose:
 					cv2.namedWindow('train_img', cv2.WINDOW_NORMAL)
 					cv2.imshow('train_img', train_img)
-					cv2.waitKey(200)
+
+
+					cv2.namedWindow('train_img_corners', cv2.WINDOW_NORMAL)
+					cv2.imshow('train_img_corners', draw_corners_on_marker(train_img, gt_corners.flatten()))
+
+					cv2.waitKey(0)
 					cv2.destroyAllWindows()
+
+
+				if w % 1000 == 0:
+					print(str(w) + '/' + str(numWarps))
 
 			else:
 				print("Warning: It could not be load background image: " + imBackground)
 				w = w-1
-	fileList.close()
+
+
+	
+	fileList_Train.close()
+	fileList_Val.close()
 
 if __name__ == "__main__":
-    main(sys.argv)
+
+	# NOTE
+	# check this path dirs!
+
+	# Dir in which the new patches are saved 
+	outImPath = 'data/64/' 
+
+	# Full file path referencing the patches and ground truth
+	valFilename = 'data/64/val_data_list.txt' 
+	trainFilename = 'data/64/train_data_list.txt' 
+
+	verbose = False	# set True to display the process
+
+	create_dataset('/home/mondejar/dataset/markers/', '/home/mondejar/dataset/mirflickr/', 22000, 64, outImPath, valFilename, trainFilename, verbose)
+    

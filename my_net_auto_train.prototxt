@@ -3,12 +3,15 @@ layer {
   type: "Data"
   top: "data"
   top: "data2"
+  include {
+    phase: TRAIN
+  }
   transform_param {
     scale: 0.00392156885937
   }
   data_param {
-    source: "/home/mondejar/markers_end2end/LMDB/markers_img_LMDB"
-    batch_size: 100
+    source: "/home/mondejar/markers_end2end/LMDB/training/markers_img_LMDB"
+    batch_size: 64
     backend: LMDB
   }
 }
@@ -17,9 +20,43 @@ layer {
   type: "Data"
   top: "label"
   top: "label2"
+  include {
+    phase: TRAIN
+  }
   data_param {
-    source: "/home/mondejar/markers_end2end/LMDB/markers_labels_LMDB"
-    batch_size: 100
+    source: "/home/mondejar/markers_end2end/LMDB/training/markers_labels_LMDB"
+    batch_size: 64
+    backend: LMDB
+  }
+}
+layer {
+  name: "test_data"
+  type: "Data"
+  top: "data"
+  top: "data2"
+  include {
+    phase: TEST
+  }
+  transform_param {
+    scale: 0.00392156885937
+  }
+  data_param {
+    source: "/home/mondejar/markers_end2end/LMDB/validation/markers_img_LMDB"
+    batch_size: 64
+    backend: LMDB
+  }
+}
+layer {
+  name: "test_label"
+  type: "Data"
+  top: "label"
+  top: "label2"
+  include {
+    phase: TEST
+  }
+  data_param {
+    source: "/home/mondejar/markers_end2end/LMDB/validation/markers_labels_LMDB"
+    batch_size: 64
     backend: LMDB
   }
 }
@@ -29,10 +66,10 @@ layer {
   bottom: "data"
   top: "conv1"
   convolution_param {
-    num_output: 64
+    num_output: 32
     kernel_size: 3
     weight_filler {
-      type: "constant"
+      type: "xavier"
     }
   }
 }
@@ -53,10 +90,10 @@ layer {
   bottom: "pool2"
   top: "conv3"
   convolution_param {
-    num_output: 64
+    num_output: 32
     kernel_size: 3
     weight_filler {
-      type: "constant"
+      type: "xavier"
     }
   }
 }
@@ -77,10 +114,10 @@ layer {
   bottom: "pool4"
   top: "conv5"
   convolution_param {
-    num_output: 128
+    num_output: 64
     kernel_size: 3
     weight_filler {
-      type: "constant"
+      type: "xavier"
     }
   }
 }
@@ -104,7 +141,7 @@ layer {
     num_output: 128
     kernel_size: 3
     weight_filler {
-      type: "constant"
+      type: "xavier"
     }
   }
 }
@@ -116,7 +153,7 @@ layer {
   inner_product_param {
     num_output: 1024
     weight_filler {
-      type: "constant"
+      type: "xavier"
     }
   }
 }
@@ -128,7 +165,7 @@ layer {
   inner_product_param {
     num_output: 8
     weight_filler {
-      type: "constant"
+      type: "xavier"
     }
   }
 }

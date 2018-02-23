@@ -27,7 +27,7 @@ def draw_corners_on_marker(img, corners):
 
     height, width = img.shape[:2]
 
-    thickness = 2
+    thickness = 1
     #Draw polylines
     points = np.array([[corners[0], corners[1]], [corners[2], corners[3]],
         [corners[6], corners[7]], [corners[4], corners[5]]])
