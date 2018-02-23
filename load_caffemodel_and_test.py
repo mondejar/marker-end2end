@@ -15,7 +15,7 @@ from draw_corners_on_marker import *
 marker_size = 128
 
 model_dir = '/home/mondejar/markers_end2end/'
-model_filename = model_dir + 'caffe/my_net_iter_5000.caffemodel'
+model_filename = model_dir + 'caffe/my_net_iter_10000.caffemodel'
 prototxt_filename = model_dir + 'my_net_auto_train.prototxt'
 
 caffe.set_device(0)
@@ -39,17 +39,19 @@ for b in range(0, batch_size):
     im = np.array(net.blobs['data'].data[b].reshape(marker_size, marker_size) * 255.0, dtype=np.uint8) 
     im_pred = draw_corners_on_marker(im, predicted_coor * float(marker_size))
 
-    cv2.namedWindow('img', cv2.WINDOW_NORMAL)
-    cv2.imshow('img', im_pred)
-
-
     cv2.imwrite(export_dir + 'marker_' + str(b) + '.png', im_pred)
 
-    im_gt = draw_corners_on_marker(im, gt_corr[0][0] * float(marker_size))
-    cv2.namedWindow('im_gt', cv2.WINDOW_NORMAL)
-    cv2.imshow('im_gt', im_gt)
-    key = cv2.waitKey(0)
+
+    # Display
+
+    #cv2.namedWindow('img', cv2.WINDOW_NORMAL)
+    #cv2.imshow('img', im_pred)
+
+    #im_gt = draw_corners_on_marker(im, gt_corr[0][0] * float(marker_size))
+    #cv2.namedWindow('im_gt', cv2.WINDOW_NORMAL)
+    #cv2.imshow('im_gt', im_gt)
+    #key = cv2.waitKey(0)
     
-    if key == 27:    # Esc key to stop
-       sys.exit(0)
-    cv2.destroyAllWindows()
+    #if key == 27:    # Esc key to stop
+    #   sys.exit(0)
+    #cv2.destroyAllWindows()
