@@ -61,11 +61,11 @@ def affine_transform( patchSize, white_border_factor, img, randomDispFactor ):
 	maxH = np.max(cornersT, 0)[1] - np.min(cornersT, 0)[1]
 
 	persT = cv2.getPerspectiveTransform(corners, cornersT)
-	warpImg = cv2.warpPerspective(img, persT, (maxW, maxH))
+	warpImg = cv2.warpPerspective(img, persT, (maxW, maxH), flags=cv2.INTER_LINEAR)#, borderMode=cv2.BORDER_CONSTANT)
 
 	# Set mask for only select the marker affine
 	mask_perspect = np.zeros((patchSize, patchSize, 1), dtype = "uint8") + 255
-	mask_perspect = cv2.warpPerspective(mask_perspect, persT, (maxW, maxH))
+	mask_perspect = cv2.warpPerspective(mask_perspect, persT, (maxW, maxH), flags=cv2.INTER_LINEAR)
 
 
 	black_corners = np.array([black_corners])
@@ -232,13 +232,13 @@ if __name__ == "__main__":
 	# check this path dirs!
 
 	# Dir in which the new patches are saved 
-	outImPath = 'data/64/' 
+	outImPath = 'data/128/' 
 
 	# Full file path referencing the patches and ground truth
-	valFilename = 'data/64/val_data_list.txt' 
-	trainFilename = 'data/64/train_data_list.txt' 
+	valFilename = 'data/128/val_data_list.txt' 
+	trainFilename = 'data/128/train_data_list.txt' 
 
 	verbose = False	# set True to display the process
 
-	create_dataset('/home/mondejar/dataset/markers/', '/home/mondejar/dataset/mirflickr/', 22000, 64, outImPath, valFilename, trainFilename, verbose)
+	create_dataset('/home/mondejar/dataset/markers/', '/home/mondejar/dataset/mirflickr/', 22000, 128, outImPath, valFilename, trainFilename, verbose)
     

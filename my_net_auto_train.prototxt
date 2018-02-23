@@ -138,7 +138,7 @@ layer {
   bottom: "pool6"
   top: "conv7"
   convolution_param {
-    num_output: 128
+    num_output: 64
     kernel_size: 3
     weight_filler {
       type: "xavier"

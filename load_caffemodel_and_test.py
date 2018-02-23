@@ -12,8 +12,8 @@ import cv2
 from draw_corners_on_marker import *
 
 
-model_dir = '/home/mondejar/markers_end2end/caffe/model_2/'
-model_filename = model_dir + 'my_net_iter_10000.caffemodel'
+model_dir = '/home/mondejar/markers_end2end/'
+model_filename = model_dir + 'caffe/my_net_iter_15000.caffemodel'
 prototxt_filename = model_dir + 'my_net_auto_train.prototxt'
 
 caffe.set_device(0)

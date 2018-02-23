@@ -39,7 +39,7 @@ def my_net(data_train_lmdb, label_train_lmdb, data_val_lmdb, label_val_lmdb, bat
     #n.conv6 = L.Convolution(n.conv5,kernel_size=3, num_output=128, weight_filler=dict(type='xavier'))
     n.pool6 = L.Pooling(n.conv5,    kernel_size=3, stride=2, pool=P.Pooling.MAX)
 
-    n.conv7 = L.Convolution(n.pool6,kernel_size=3, num_output=128, weight_filler=dict(type='xavier'))
+    n.conv7 = L.Convolution(n.pool6,kernel_size=3, num_output=64, weight_filler=dict(type='xavier'))
     #n.conv8 = L.Convolution(n.conv7,kernel_size=3, num_output=128, weight_filler=dict(type='xavier'))
  
     #n.drop8 = L.Dropout(n.conv7, in_place=True)

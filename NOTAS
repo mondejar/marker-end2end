@@ -3,3 +3,7 @@ Cambiar a mano
 .prototxt
 
 test_data = data
+
+remove
+data2
+label2

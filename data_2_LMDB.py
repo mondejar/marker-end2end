@@ -22,6 +22,9 @@ import os
 
 def data_2_LMDB(dirBase, datasetFile, marker_size, output_dir, batch_size):
 
+	if not os.path.exists(output_dir):
+		os.mkdir(output_dir)
+    
     img_LMDB_name = output_dir + '/markers_img_LMDB'
     label_LMDB_name = output_dir + '/markers_labels_LMDB'
 
@@ -106,13 +109,13 @@ def data_2_LMDB(dirBase, datasetFile, marker_size, output_dir, batch_size):
 if __name__ == "__main__":
 
     dirBase = '/home/mondejar/markers_end2end/'
-    marker_size = 64
+    marker_size = 128#64
 
     print("Creating LMDB train data ")
-    datasetFile = '/home/mondejar/markers_end2end/data/64/train_data_list.txt'
-    data_2_LMDB(dirBase, datasetFile, marker_size, 'LMDB/training', 100)
+    datasetFile = '/home/mondejar/markers_end2end/data/' + str(marker_size) + '/train_data_list.txt'
+    data_2_LMDB(dirBase, datasetFile, marker_size, 'LMDB/' + str(marker_size) + '/training', marker_size)
 
 
     print("Creating LMDB validation data ")
-    datasetFile = '/home/mondejar/markers_end2end/data/64/val_data_list.txt'
-    data_2_LMDB(dirBase, datasetFile, marker_size, 'LMDB/validation', 100)
+    datasetFile = '/home/mondejar/markers_end2end/data/' + str(marker_size) + '/val_data_list.txt'
+    data_2_LMDB(dirBase, datasetFile, marker_size, 'LMDB/' + str(marker_size) + '/validation', marker_size)
