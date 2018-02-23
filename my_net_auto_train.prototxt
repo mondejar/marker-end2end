@@ -10,7 +10,7 @@ layer {
     scale: 0.00392156885937
   }
   data_param {
-    source: "/home/mondejar/markers_end2end/LMDB/training/markers_img_LMDB"
+    source: "/home/mondejar/markers_end2end/LMDB/128/training/markers_img_LMDB"
     batch_size: 64
     backend: LMDB
   }
@@ -24,7 +24,7 @@ layer {
     phase: TRAIN
   }
   data_param {
-    source: "/home/mondejar/markers_end2end/LMDB/training/markers_labels_LMDB"
+    source: "/home/mondejar/markers_end2end/LMDB/128/training/markers_labels_LMDB"
     batch_size: 64
     backend: LMDB
   }
@@ -41,7 +41,7 @@ layer {
     scale: 0.00392156885937
   }
   data_param {
-    source: "/home/mondejar/markers_end2end/LMDB/validation/markers_img_LMDB"
+    source: "/home/mondejar/markers_end2end/LMDB/128/validation/markers_img_LMDB"
     batch_size: 64
     backend: LMDB
   }
@@ -55,7 +55,7 @@ layer {
     phase: TEST
   }
   data_param {
-    source: "/home/mondejar/markers_end2end/LMDB/validation/markers_labels_LMDB"
+    source: "/home/mondejar/markers_end2end/LMDB/128/validation/markers_labels_LMDB"
     batch_size: 64
     backend: LMDB
   }
@@ -146,9 +146,31 @@ layer {
   }
 }
 layer {
+  name: "conv8"
+  type: "Convolution"
+  bottom: "conv7"
+  top: "conv8"
+  convolution_param {
+    num_output: 128
+    kernel_size: 3
+    weight_filler {
+      type: "xavier"
+    }
+  }
+}
+layer {
+  name: "drop8"
+  type: "Dropout"
+  bottom: "conv8"
+  top: "conv8"
+  dropout_param {
+    dropout_ratio: 0.5
+  }
+}
+layer {
   name: "fc1"
   type: "InnerProduct"
-  bottom: "conv7"
+  bottom: "conv8"
   top: "fc1"
   inner_product_param {
     num_output: 1024

@@ -106,7 +106,7 @@ def merge_images(train_img, x_pos, y_pos, marker_affin, mask_perspect):
 	
 	for x in range(0, cols):
 		for y in range(0, rows):
-			if mask_perspect[y,x] != 0:
+			if mask_perspect[y,x] == 255:
 				train_img[y_pos + y, x_pos + x ] = marker_affin[y,x]
 
 	return train_img
@@ -164,7 +164,7 @@ def create_dataset(marker_dataset, img_dataset, numWarps, patchSize, outImPath, 
 				# Ilumination? non uniform?
 
 				# affine transform
-				white_border_factor = 0.115
+				white_border_factor = 0.11#0.115
 				marker_affin, persT, mask_perspect, image_corners, gt_corners = affine_transform(marker_size, white_border_factor, marker_scale, 0.25)#0.4)
 
 				rows_marker, cols_marker = marker_affin.shape
@@ -240,5 +240,5 @@ if __name__ == "__main__":
 
 	verbose = False	# set True to display the process
 
-	create_dataset('/home/mondejar/dataset/markers/', '/home/mondejar/dataset/mirflickr/', 22000, 128, outImPath, valFilename, trainFilename, verbose)
+	create_dataset('/home/mondejar/dataset/markers/', '/home/mondejar/dataset/mirflickr/', 100000, 128, outImPath, valFilename, trainFilename, verbose)
     

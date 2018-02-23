@@ -21,9 +21,8 @@ import shutil
 import os 
 
 def data_2_LMDB(dirBase, datasetFile, marker_size, output_dir, batch_size):
-
-	if not os.path.exists(output_dir):
-		os.mkdir(output_dir)
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
     
     img_LMDB_name = output_dir + '/markers_img_LMDB'
     label_LMDB_name = output_dir + '/markers_labels_LMDB'

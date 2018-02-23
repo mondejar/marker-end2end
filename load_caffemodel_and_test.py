@@ -12,8 +12,10 @@ import cv2
 from draw_corners_on_marker import *
 
 
+marker_size = 128
+
 model_dir = '/home/mondejar/markers_end2end/'
-model_filename = model_dir + 'caffe/my_net_iter_15000.caffemodel'
+model_filename = model_dir + 'caffe/my_net_iter_5000.caffemodel'
 prototxt_filename = model_dir + 'my_net_auto_train.prototxt'
 
 caffe.set_device(0)
@@ -34,17 +36,18 @@ for b in range(0, batch_size):
     print('Score output:', predicted_coor)
 
     # Draw Output
-    im = np.array(net.blobs['data'].data[b].reshape(64,64) * 255.0, dtype=np.uint8) 
-    im_pred = draw_corners_on_marker(im, predicted_coor * 64.0)
-    #im_gt = draw_corners_on_marker(im, gt_corr[0][0] * 64.0)
+    im = np.array(net.blobs['data'].data[b].reshape(marker_size, marker_size) * 255.0, dtype=np.uint8) 
+    im_pred = draw_corners_on_marker(im, predicted_coor * float(marker_size))
 
     cv2.namedWindow('img', cv2.WINDOW_NORMAL)
     cv2.imshow('img', im_pred)
 
 
     cv2.imwrite(export_dir + 'marker_' + str(b) + '.png', im_pred)
-    #cv2.namedWindow('im_gt', cv2.WINDOW_NORMAL)
-    #cv2.imshow('im_gt', im_gt)
+
+    im_gt = draw_corners_on_marker(im, gt_corr[0][0] * float(marker_size))
+    cv2.namedWindow('im_gt', cv2.WINDOW_NORMAL)
+    cv2.imshow('im_gt', im_gt)
     key = cv2.waitKey(0)
     
     if key == 27:    # Esc key to stop

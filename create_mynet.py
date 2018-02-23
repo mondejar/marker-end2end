@@ -40,12 +40,13 @@ def my_net(data_train_lmdb, label_train_lmdb, data_val_lmdb, label_val_lmdb, bat
     n.pool6 = L.Pooling(n.conv5,    kernel_size=3, stride=2, pool=P.Pooling.MAX)
 
     n.conv7 = L.Convolution(n.pool6,kernel_size=3, num_output=64, weight_filler=dict(type='xavier'))
-    #n.conv8 = L.Convolution(n.conv7,kernel_size=3, num_output=128, weight_filler=dict(type='xavier'))
+    n.conv8 = L.Convolution(n.conv7,kernel_size=3, num_output=128, weight_filler=dict(type='xavier'))
  
-    #n.drop8 = L.Dropout(n.conv7, in_place=True)
+    n.drop8 = L.Dropout(n.conv8, in_place=True, dropout_ratio= 0.5)
     # Dropout
 
-    n.fc1 =   L.InnerProduct(n.conv7, num_output=1024, weight_filler=dict(type='xavier'))
+    #n.fc1 =   L.InnerProduct(n.conv7, num_output=1024, weight_filler=dict(type='xavier'))
+    n.fc1 =   L.InnerProduct(n.drop8, num_output=1024, weight_filler=dict(type='xavier'))
     #n.relu1 = L.ReLU(n.fc1, in_place=True)
     n.score = L.InnerProduct(n.fc1, num_output=8, weight_filler=dict(type='xavier'))
 
@@ -57,8 +58,9 @@ def my_net(data_train_lmdb, label_train_lmdb, data_val_lmdb, label_val_lmdb, bat
     return n.to_proto()
     
 with open('/home/mondejar/markers_end2end/my_net_auto_train.prototxt', 'w') as f:
-    lmdb_dir_tr  = '/home/mondejar/markers_end2end/LMDB/training'
-    lmdb_dir_val = '/home/mondejar/markers_end2end/LMDB/validation'
+    marker_size = 128#64
+    lmdb_dir_tr  = '/home/mondejar/markers_end2end/LMDB/' + str(marker_size) + '/training'
+    lmdb_dir_val = '/home/mondejar/markers_end2end/LMDB/' + str(marker_size) + '/validation'
 
     f.write(str(my_net(lmdb_dir_tr + '/markers_img_LMDB', lmdb_dir_tr + '/markers_labels_LMDB',
         lmdb_dir_val + '/markers_img_LMDB', lmdb_dir_val + '/markers_labels_LMDB', 64)))
