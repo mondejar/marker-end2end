@@ -12,7 +12,7 @@ import cv2
 from draw_corners_on_marker import *
 
 
-marker_size = 128
+marker_size = 64#128
 
 model_dir = '/home/mondejar/markers_end2end/'
 model_filename = model_dir + 'caffe/my_net_iter_10000.caffemodel'
@@ -28,7 +28,7 @@ net.forward() # this will load the next mini-batch as defined in the net
 
 batch_size = 64
 
-export_dir = '/home/mondejar/Escritorio/markers_results/'
+export_dir = '/home/mondejar/Dropbox/markers_results/'
 for b in range(0, batch_size):
     gt_corr = np.array(net.blobs['label'].data[b])
     predicted_coor = net.blobs['score'].data[b]
@@ -36,11 +36,14 @@ for b in range(0, batch_size):
     print('Score output:', predicted_coor)
 
     # Draw Output
-    im = np.array(net.blobs['data'].data[b].reshape(marker_size, marker_size) * 255.0, dtype=np.uint8) 
-    im_pred = draw_corners_on_marker(im, predicted_coor * float(marker_size))
+    # two chanels
+    im = np.array(net.blobs['data'].data[b].reshape(2, marker_size, marker_size) * 255.0, dtype=np.uint8) 
+    im_pred = draw_corners_on_marker(im[0], predicted_coor * float(marker_size))
+
+    #im = np.array(net.blobs['data'].data[b].reshape(marker_size, marker_size) * 255.0, dtype=np.uint8) 
+    #im_pred = draw_corners_on_marker(im, predicted_coor * float(marker_size))
 
     cv2.imwrite(export_dir + 'marker_' + str(b) + '.png', im_pred)
-
 
     # Display
 

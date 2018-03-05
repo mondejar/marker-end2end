@@ -31,9 +31,12 @@ Example call:
 
 
 # Generate a random affine transform over the four corners
-def affine_transform(img, mask_img, patchSize, marker_corners, randomDispFactor ):
+def affine_transform( patchSize, white_border, img, randomDispFactor ):
+	
+	# To save the correct GT (black borders)
+	black_corners = np.array([[white_border, white_border], [white_border, patchSize-white_border], [patchSize-white_border, white_border], [patchSize-white_border, patchSize-white_border]], dtype='float32')
 	 
-	# To warp the full image (including white borders)
+	# To warp the full imagen (including white borders)
 	corners = np.float32([[0, 0], [0, patchSize], [patchSize, 0], [patchSize, patchSize]])
 	cornersT = np.float32([[0, 0], [0, 0], [0, 0], [0, 0]])
 
@@ -55,15 +58,16 @@ def affine_transform(img, mask_img, patchSize, marker_corners, randomDispFactor 
 	maxH = np.max(cornersT, 0)[1] - np.min(cornersT, 0)[1]
 
 	persT = cv2.getPerspectiveTransform(corners, cornersT)
-	warp_img = cv2.warpPerspective(img, persT, (maxH, maxW), flags=cv2.INTER_LINEAR)#, borderMode=cv2.BORDER_CONSTANT)
+	warpImg = cv2.warpPerspective(img, persT, (maxW, maxH), flags=cv2.INTER_LINEAR)#, borderMode=cv2.BORDER_CONSTANT)
 
 	# Set mask for only select the marker affine
-	warp_mask_img = cv2.warpPerspective(mask_img, persT, (maxH, maxW), flags=cv2.INTER_LINEAR)#, borderMode=cv2.BORDER_CONSTANT)
+	mask_perspect = np.zeros((patchSize, patchSize, 1), dtype = "uint8") + 255
+	mask_perspect = cv2.warpPerspective(mask_perspect, persT, (maxW, maxH), flags=cv2.INTER_LINEAR)
 
-	marker_corners = np.array([marker_corners])
-	marker_corners_T = cv2.perspectiveTransform(marker_corners, persT)
+	black_corners = np.array([black_corners])
+	black_cornersT = cv2.perspectiveTransform(black_corners, persT)
 
-	return warp_img, warp_mask_img, marker_corners_T
+	return warpImg, persT, mask_perspect, cornersT, black_cornersT[0]
 
 def dynamic_range_compression(img):
 	
@@ -82,25 +86,28 @@ def dynamic_range_compression(img):
 	return img
 
 
-def blurring(img):
-	x_value = random.uniform(1.0, 9.0)
-	y_value = random.uniform(1.0, 9.0)
-
-	img = cv2.blur(img, (int(x_value), int(y_value)), 0)
-
-	return img
-
 # Put the marker in the background image
 # This function is needed for the affine transform
 # Mask contains the pixels of the marker with 255
 #
 #   Marker corners:
 #
-#     0----1
+#     0----2
 #     |    |
-#     2----3
+#     1----3
 #
+def merge_images(train_img, x_pos, y_pos, marker_affin, mask_perspect, patchSize):
+	rows, cols = marker_affin.shape
+	mask_train_img = np.zeros((patchSize, patchSize))
 
+	for x in range(0, cols):
+		for y in range(0, rows):
+			if mask_perspect[y,x] == 255:
+				train_img[y_pos + y, x_pos + x ] = marker_affin[y,x]
+
+				mask_train_img[y_pos + y, x_pos + x ] = 255
+
+	return train_img, mask_train_img
 
 def create_dataset(marker_dataset, img_dataset, numWarps, patchSize, outImPath, valFilename, trainFilename, verbose):
 
@@ -137,69 +144,13 @@ def create_dataset(marker_dataset, img_dataset, numWarps, patchSize, outImPath, 
 			back_img = cv2.imread(img_dataset + imBackground, 0)
 
 			if not back_img is None:
-							
-				# Resample the background image to the double of patch size
-				train_img = cv2.resize(back_img, ( 2 * patchSize, 2 * patchSize)) 	
+				# Resample background image to specified size
+				train_img = cv2.resize(back_img, (patchSize, patchSize)) 				
 
-				# TODO: 
 				# Scale the marker at some size between 10-50% of the specified size
 				scale_factor = random.uniform(0.3, 0.7)#0.1, 0.5
 				marker_size = int(patchSize * scale_factor)
 				marker_scale = cv2.resize(marker_orig, (marker_size, marker_size))
-
-				# 1 Put the marker in the image and add a white border
-				x_pos = np.random.randint(patchSize/2, (patchSize + patchSize/2) - marker_size - 1)
-				y_pos = np.random.randint(patchSize/2, (patchSize + patchSize/2) - marker_size - 1)		
-
-				mask_img = np.zeros((2*patchSize, 2*patchSize))
-				whit_pix = int(marker_size * 0.1)
-
-				mask_img[x_pos:x_pos+marker_size, y_pos:y_pos+marker_size] = np.ones((marker_size, marker_size)) * 255
-				train_img[x_pos-whit_pix:x_pos+marker_size+whit_pix, y_pos-whit_pix:y_pos+marker_size+whit_pix] = np.ones((marker_size + 2*whit_pix, marker_size + 2*whit_pix)) * 255
-				train_img[x_pos:x_pos+marker_size, y_pos:y_pos+marker_size] = marker_scale
-
-
-				marker_corners = np.array([[y_pos, x_pos], [y_pos+marker_size, x_pos], [y_pos, x_pos+marker_size], [y_pos+marker_size, x_pos+marker_size]], dtype='float32')
-
-
-				# Apply affine transform and crop!
-				train_img, mask_img, marker_corners = affine_transform(train_img, mask_img, patch_size*2, marker_corners, 0.3)
-
-				# Crop the generated regions
-				train_img = train_img[patch_size/5:(2*patch_size) -patch_size/5, patch_size/5:(2*patch_size) -patch_size/5]
-				mask_img = mask_img[patch_size/5:(2*patch_size) - patch_size/5, patch_size/5:(2*patch_size) -patch_size/5]			
-				marker_corners= marker_corners-int(patch_size/5)
-
-
-				# Add extra transforms:
-				# Blurring
-				# Not apply always the bluring!
-				apply_blur = random.uniform(0.0, 1.0)
-				if apply_blur > 0.5:
-					train_img = blurring(train_img)
-					
-
-				# Light ? 
-
-				cv2.namedWindow('train_img', cv2.WINDOW_NORMAL)
-				cv2.imshow('train_img',train_img)
-
-				cv2.namedWindow('mask_img', cv2.WINDOW_NORMAL)
-				cv2.imshow('mask_img', mask_img)
-				
-				cv2.namedWindow('mask_img_C', cv2.WINDOW_NORMAL)
-				cv2.imshow('mask_img_C', draw_corners_on_marker(train_img, marker_corners.flatten()))
-				cv2.waitKey(0)
-
-
-				# then apply the scale, dynamic, blurring, ilumination and affine transform!
-				
-
-
-
-				"""
-
-
 
 
 				# gray level?
@@ -210,7 +161,7 @@ def create_dataset(marker_dataset, img_dataset, numWarps, patchSize, outImPath, 
 				# Ilumination? non uniform?
 
 				# affine transform
-				white_border = 10 # pixels
+				white_border = marker_size * 0.11 # pixels
 				marker_affin, persT, mask_perspect, image_corners, gt_corners = affine_transform(marker_size, white_border, marker_scale, 0.3)
 
 				rows_marker, cols_marker = marker_affin.shape
@@ -272,7 +223,7 @@ def create_dataset(marker_dataset, img_dataset, numWarps, patchSize, outImPath, 
 
 				if w % 1000 == 0:
 					print(str(w) + '/' + str(numWarps))
-				"""
+
 			else:
 				print("Warning: It could not be load background image: " + imBackground)
 				w = w-1
@@ -281,15 +232,6 @@ def create_dataset(marker_dataset, img_dataset, numWarps, patchSize, outImPath, 
 	
 	fileList_Train.close()
 	fileList_Val.close()
-
-
-
-
-
-
-
-
-
 
 
 

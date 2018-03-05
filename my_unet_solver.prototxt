@@ -1,17 +1,17 @@
 
 # The train/test net protocol buffer definition
-net: "/home/mondejar/markers_end2end/my_net_auto_train.prototxt"
+net: "/home/mondejar/markers_end2end/my_unet.prototxt"
 # test_iter specifies how many forward passes the test should carry out.
 # In the case of markers end 2 end, we have test batch size 64 and 100 test iterations,
 
 # covering the full 90,000 images.
-test_iter: 1500
+test_iter: 30000
 
 # Carry out testing every 1000 training iterations.
 test_interval: 1000
 
 # The base learning rate, momentum and the weight decay of the network.
-base_lr: 0.0005
+base_lr: 0.000025
 lr_policy: "step" # learning rate policy: drop the learning rate in "steps"
                   # by a factor of gamma every stepsize iterations
 
@@ -26,7 +26,6 @@ momentum: 0.9
 # The learning rate policy
 #lr_policy: "inv"
 #gamma: 0.0001
-
 
 
 power: 0.75

@@ -27,28 +27,39 @@ def my_net(data_train_lmdb, label_train_lmdb, data_val_lmdb, label_val_lmdb, bat
         source=label_val_lmdb, ntop=2, 
         include={'phase':caffe.TEST}) 
 
-    n.conv1 = L.Convolution(n.data, kernel_size=3, num_output=32, weight_filler=dict(type='xavier')) #'xavier'
-    #n.conv2 = L.Convolution(n.conv1,kernel_size=3, num_output=64, weight_filler=dict(type='xavier'))
-    n.pool2 = L.Pooling(n.conv1,    kernel_size=3, stride=2, pool=P.Pooling.MAX)
+    n.conv1 = L.Convolution(n.data, kernel_size=5, num_output=32, weight_filler=dict(type='xavier')) 
+    n.relu1 = L.ReLU(n.conv1, in_place=True)
 
-    n.conv3 = L.Convolution(n.pool2,kernel_size=3, num_output=32, weight_filler=dict(type='xavier'))
-    #n.conv4 = L.Convolution(n.conv3,kernel_size=3, num_output=64, weight_filler=dict(type='xavier'))
-    n.pool4 = L.Pooling(n.conv3,    kernel_size=3, stride=2, pool=P.Pooling.MAX)
+    #n.conv2 = L.Convolution(n.conv1,kernel_size=5, num_output=32, weight_filler=dict(type='xavier'))
+    #n.pool2 = L.Pooling(n.conv2,    kernel_size=3, stride=2, pool=P.Pooling.MAX)
+
+    n.conv3 = L.Convolution(n.relu1,kernel_size=5, num_output=32, weight_filler=dict(type='xavier'))
+    n.relu3 = L.ReLU(n.conv3, in_place=True)
+
+    #n.conv4 = L.Convolution(n.conv3,kernel_size=5, num_output=32, weight_filler=dict(type='xavier'))
+    n.pool4 = L.Pooling(n.relu3,    kernel_size=3, stride=2, pool=P.Pooling.MAX)
 
     n.conv5 = L.Convolution(n.pool4,kernel_size=3, num_output=64, weight_filler=dict(type='xavier'))
-    #n.conv6 = L.Convolution(n.conv5,kernel_size=3, num_output=128, weight_filler=dict(type='xavier'))
-    n.pool6 = L.Pooling(n.conv5,    kernel_size=3, stride=2, pool=P.Pooling.MAX)
+    n.relu5 = L.ReLU(n.conv5, in_place=True)
+
+    n.conv6 = L.Convolution(n.conv5,kernel_size=3, num_output=64, weight_filler=dict(type='xavier'))
+    n.relu6 = L.ReLU(n.conv6, in_place=True)
+    
+    n.pool6 = L.Pooling(n.relu6,    kernel_size=3, stride=2, pool=P.Pooling.MAX)
 
     n.conv7 = L.Convolution(n.pool6,kernel_size=3, num_output=64, weight_filler=dict(type='xavier'))
-    n.conv8 = L.Convolution(n.conv7,kernel_size=3, num_output=128, weight_filler=dict(type='xavier'))
- 
-    n.drop8 = L.Dropout(n.conv8, in_place=True, dropout_ratio= 0.5)
+    n.relu7 = L.ReLU(n.conv7, in_place=True)
+
+    n.conv8 = L.Convolution(n.relu7,kernel_size=3, num_output=64, weight_filler=dict(type='xavier'))
+    n.relu8 = L.ReLU(n.conv8, in_place=True)
+
+    n.drop8 = L.Dropout(n.relu8, in_place=True, dropout_ratio= 0.5)
     # Dropout
 
     #n.fc1 =   L.InnerProduct(n.conv7, num_output=1024, weight_filler=dict(type='xavier'))
-    n.fc1 =   L.InnerProduct(n.drop8, num_output=1024, weight_filler=dict(type='xavier'))
-    #n.relu1 = L.ReLU(n.fc1, in_place=True)
-    n.score = L.InnerProduct(n.fc1, num_output=8, weight_filler=dict(type='xavier'))
+    n.fc1 =   L.InnerProduct(n.drop8, num_output=256, weight_filler=dict(type='xavier'))
+    n.relu9 = L.ReLU(n.fc1, in_place=True)
+    n.score = L.InnerProduct(n.relu9, num_output=8, weight_filler=dict(type='xavier'))
 
     n.loss =  L.EuclideanLoss(n.score, n.label)
 
@@ -58,7 +69,7 @@ def my_net(data_train_lmdb, label_train_lmdb, data_val_lmdb, label_val_lmdb, bat
     return n.to_proto()
     
 with open('/home/mondejar/markers_end2end/my_net_auto_train.prototxt', 'w') as f:
-    marker_size = 128#64
+    marker_size = 64#128
     lmdb_dir_tr  = '/home/mondejar/markers_end2end/LMDB/' + str(marker_size) + '/training'
     lmdb_dir_val = '/home/mondejar/markers_end2end/LMDB/' + str(marker_size) + '/validation'
 

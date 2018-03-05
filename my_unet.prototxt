@@ -2,7 +2,6 @@ layer {
   name: "data"
   type: "Data"
   top: "data"
-  top: "data2"
   include {
     phase: TRAIN
   }
@@ -11,7 +10,7 @@ layer {
   }
   data_param {
     source: "/home/mondejar/markers_end2end/LMDB/64/training/markers_img_LMDB"
-    batch_size: 64
+    batch_size: 1
     backend: LMDB
   }
 }
@@ -19,13 +18,15 @@ layer {
   name: "label"
   type: "Data"
   top: "label"
-  top: "label2"
   include {
     phase: TRAIN
   }
+  transform_param {
+    scale: 0.00392156885937
+  }
   data_param {
-    source: "/home/mondejar/markers_end2end/LMDB/64/training/markers_labels_LMDB"
-    batch_size: 64
+    source: "/home/mondejar/markers_end2end/LMDB/64/training/markers_labels_mask_LMDB"
+    batch_size: 1
     backend: LMDB
   }
 }
@@ -33,7 +34,6 @@ layer {
   name: "data"
   type: "Data"
   top: "data"
-  top: "data2"
   include {
     phase: TEST
   }
@@ -42,7 +42,7 @@ layer {
   }
   data_param {
     source: "/home/mondejar/markers_end2end/LMDB/64/validation/markers_img_LMDB"
-    batch_size: 64
+    batch_size: 1
     backend: LMDB
   }
 }
@@ -50,13 +50,15 @@ layer {
   name: "label"
   type: "Data"
   top: "label"
-  top: "label2"
   include {
     phase: TEST
   }
+  transform_param {
+    scale: 0.00392156885937
+  }
   data_param {
-    source: "/home/mondejar/markers_end2end/LMDB/64/validation/markers_labels_LMDB"
-    batch_size: 64
+    source: "/home/mondejar/markers_end2end/LMDB/64/validation/markers_labels_mask_LMDB"
+    batch_size: 1
     backend: LMDB
   }
 }
@@ -67,7 +69,8 @@ layer {
   top: "conv1"
   convolution_param {
     num_output: 32
-    kernel_size: 5
+    pad: 1
+    kernel_size: 3
     weight_filler {
       type: "xavier"
     }
@@ -80,13 +83,25 @@ layer {
   top: "conv1"
 }
 layer {
+  name: "pool2"
+  type: "Pooling"
+  bottom: "conv1"
+  top: "pool2"
+  pooling_param {
+    pool: MAX
+    kernel_size: 3
+    stride: 2
+  }
+}
+layer {
   name: "conv3"
   type: "Convolution"
-  bottom: "conv1"
+  bottom: "pool2"
   top: "conv3"
   convolution_param {
-    num_output: 32
-    kernel_size: 5
+    num_output: 64
+    pad: 1
+    kernel_size: 3
     weight_filler {
       type: "xavier"
     }
@@ -99,91 +114,13 @@ layer {
   top: "conv3"
 }
 layer {
-  name: "pool4"
-  type: "Pooling"
-  bottom: "conv3"
-  top: "pool4"
-  pooling_param {
-    pool: MAX
-    kernel_size: 3
-    stride: 2
-  }
-}
-layer {
-  name: "conv5"
-  type: "Convolution"
-  bottom: "pool4"
-  top: "conv5"
-  convolution_param {
-    num_output: 64
-    kernel_size: 3
-    weight_filler {
-      type: "xavier"
-    }
-  }
-}
-layer {
-  name: "relu5"
-  type: "ReLU"
-  bottom: "conv5"
-  top: "conv5"
-}
-layer {
-  name: "conv6"
-  type: "Convolution"
-  bottom: "conv5"
-  top: "conv6"
-  convolution_param {
-    num_output: 64
-    kernel_size: 3
-    weight_filler {
-      type: "xavier"
-    }
-  }
-}
-layer {
-  name: "relu6"
-  type: "ReLU"
-  bottom: "conv6"
-  top: "conv6"
-}
-layer {
-  name: "pool6"
-  type: "Pooling"
-  bottom: "conv6"
-  top: "pool6"
-  pooling_param {
-    pool: MAX
-    kernel_size: 3
-    stride: 2
-  }
-}
-layer {
-  name: "conv7"
-  type: "Convolution"
-  bottom: "pool6"
-  top: "conv7"
-  convolution_param {
-    num_output: 64
-    kernel_size: 3
-    weight_filler {
-      type: "xavier"
-    }
-  }
-}
-layer {
-  name: "relu7"
-  type: "ReLU"
-  bottom: "conv7"
-  top: "conv7"
-}
-layer {
   name: "conv8"
   type: "Convolution"
-  bottom: "conv7"
+  bottom: "conv3"
   top: "conv8"
   convolution_param {
     num_output: 64
+    pad: 1
     kernel_size: 3
     weight_filler {
       type: "xavier"
@@ -197,39 +134,72 @@ layer {
   top: "conv8"
 }
 layer {
-  name: "drop8"
-  type: "Dropout"
+  name: "deconv9"
+  type: "Deconvolution"
   bottom: "conv8"
-  top: "conv8"
-  dropout_param {
-    dropout_ratio: 0.5
+  top: "deconv9"
+  convolution_param {
+    num_output: 32
+    kernel_size: 2
+    stride: 2
   }
 }
 layer {
-  name: "fc1"
-  type: "InnerProduct"
-  bottom: "conv8"
-  top: "fc1"
-  inner_product_param {
-    num_output: 256
+  name: "concat9"
+  type: "Concat"
+  bottom: "conv1"
+  bottom: "deconv9"
+  top: "concat9"
+}
+layer {
+  name: "conv10"
+  type: "Convolution"
+  bottom: "concat9"
+  top: "conv10"
+  convolution_param {
+    num_output: 32
+    pad: 1
+    kernel_size: 3
     weight_filler {
       type: "xavier"
     }
   }
 }
 layer {
-  name: "relu9"
+  name: "relu10"
   type: "ReLU"
-  bottom: "fc1"
-  top: "fc1"
+  bottom: "conv10"
+  top: "conv10"
 }
 layer {
-  name: "score"
-  type: "InnerProduct"
-  bottom: "fc1"
-  top: "score"
-  inner_product_param {
-    num_output: 8
+  name: "conv11"
+  type: "Convolution"
+  bottom: "conv10"
+  top: "conv11"
+  convolution_param {
+    num_output: 32
+    pad: 1
+    kernel_size: 3
+    weight_filler {
+      type: "xavier"
+    }
+  }
+}
+layer {
+  name: "relu11"
+  type: "ReLU"
+  bottom: "conv11"
+  top: "conv11"
+}
+layer {
+  name: "conv12"
+  type: "Convolution"
+  bottom: "conv11"
+  top: "conv12"
+  convolution_param {
+    num_output: 1
+    pad: 1
+    kernel_size: 3
     weight_filler {
       type: "xavier"
     }
@@ -237,8 +207,8 @@ layer {
 }
 layer {
   name: "loss"
-  type: "EuclideanLoss"
-  bottom: "score"
+  type: "SigmoidCrossEntropyLoss"
+  bottom: "conv12"
   bottom: "label"
   top: "loss"
 }
