@@ -14,9 +14,9 @@ from draw_corners_on_marker import *
 verbose = 2
 
 
-marker_size = 64#128
+marker_size = 128
 model_dir = '/home/mondejar/markers_end2end/'
-model_filename = model_dir + 'caffe/my_net_iter_55000.caffemodel'
+model_filename = model_dir + 'caffe/my_net_iter_50000.caffemodel'
 prototxt_filename = model_dir + 'my_unet.prototxt'
 
 caffe.set_device(0)
@@ -36,20 +36,22 @@ for n in range(0, num_batches):
 
         # Draw Output
         # two chanels
-        #im = np.array(net.blobs['data'].data[b].reshape(2, marker_size, marker_size) * 255.0, dtype=np.uint8) 
-        im = np.array(net.blobs['data'].data[b].reshape(marker_size, marker_size) * 255.0, dtype=np.float32)
-        
-        im_pred = np.array(net.blobs['conv12'].data[b].reshape(marker_size, marker_size) * 255.0, dtype=np.float32)
-        #im = np.array(net.blobs['data'].data[b].reshape(marker_size, marker_size) * 255.0, dtype=np.uint8) 
-        #im_pred = draw_corners_on_marker(im, predicted_coor * float(marker_size))
+        im = np.array(net.blobs['data'].data[b].reshape(marker_size, marker_size) * 255.0, dtype=np.float32) #dtype=np.uint8
+        im_pred = np.array(net.blobs['conv12'].data[b].reshape(marker_size, marker_size) * 255.0, dtype=np.float32) #dtype=np.uint8
 
         im_show = cv2.cvtColor(im,cv2.COLOR_GRAY2RGB)
-        im_show[:,:,1] = im_pred
+        rows, cols = im.shape
+        for r in range(rows):
+            for c in range(cols):
+                if im_pred[r,c] > 0 and im_gt[r,c] == 255.0: # TP
+                    im_show[r,c,1] = 255
+                elif im_pred[r,c] > 0 and im_gt[r,c] == 0.0: # FP
+                    im_show[r,c,2] = 255
+                elif im_pred[r,c] < 0 and im_gt[r,c] == 255.0: # FN
+                    im_show[r,c,0] = 255
+                    
         cv2.imwrite(export_dir + 'marker_' + str(n) + '_pred.png', im_show)
 
-        #cv2.imwrite(export_dir + 'marker_' + str(n) + '.png', im) #[0]
-        #cv2.imwrite(export_dir + 'marker_' + str(n) + '_gt.png', im_gt)   
-        #cv2.imwrite(export_dir + 'marker_' + str(n) + '_pred.png', im_pred)
 
         # TODO fuse both images??
 

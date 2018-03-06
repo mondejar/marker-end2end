@@ -12,10 +12,10 @@ import cv2
 from draw_corners_on_marker import *
 
 
-marker_size = 64#128
+marker_size = 128
 
 model_dir = '/home/mondejar/markers_end2end/'
-model_filename = model_dir + 'caffe/my_net_iter_10000.caffemodel'
+model_filename = model_dir + 'caffe/my_net_iter_20000.caffemodel'
 prototxt_filename = model_dir + 'my_net_auto_train.prototxt'
 
 caffe.set_device(0)
@@ -23,38 +23,40 @@ caffe.set_mode_gpu()
 
 net = caffe.Net(prototxt_filename, model_filename, caffe.TEST)
 
-
-net.forward() # this will load the next mini-batch as defined in the net
-
-batch_size = 64
+num_batches = 1000
+batch_size = 1
 
 export_dir = '/home/mondejar/Dropbox/markers_results/'
-for b in range(0, batch_size):
-    gt_corr = np.array(net.blobs['label'].data[b])
-    predicted_coor = net.blobs['score'].data[b]
-    print('train labels:', gt_corr)
-    print('Score output:', predicted_coor)
 
-    # Draw Output
-    # two chanels
-    im = np.array(net.blobs['data'].data[b].reshape(2, marker_size, marker_size) * 255.0, dtype=np.uint8) 
-    im_pred = draw_corners_on_marker(im[0], predicted_coor * float(marker_size))
+for n in range(0, num_batches):
+    net.forward() # this will load the next mini-batch as defined in the net
 
-    #im = np.array(net.blobs['data'].data[b].reshape(marker_size, marker_size) * 255.0, dtype=np.uint8) 
-    #im_pred = draw_corners_on_marker(im, predicted_coor * float(marker_size))
+    for b in range(0, batch_size):
+        gt_corr = np.array(net.blobs['label'].data[b])
+        predicted_coor = net.blobs['score'].data[b]
+        print('train labels:', gt_corr)
+        print('Score output:', predicted_coor)
 
-    cv2.imwrite(export_dir + 'marker_' + str(b) + '.png', im_pred)
+        # Draw Output
+        # two chanels
+        im = np.array(net.blobs['data'].data[b].reshape(marker_size, marker_size) * 255.0, dtype=np.float32) 
+        im_pred = draw_corners_on_marker(im, predicted_coor * float(marker_size))
 
-    # Display
+        #im = np.array(net.blobs['data'].data[b].reshape(marker_size, marker_size) * 255.0, dtype=np.uint8) 
+        #im_pred = draw_corners_on_marker(im, predicted_coor * float(marker_size))
 
-    #cv2.namedWindow('img', cv2.WINDOW_NORMAL)
-    #cv2.imshow('img', im_pred)
+        cv2.imwrite(export_dir + 'marker_' + str(n) + '.png', im_pred)
 
-    #im_gt = draw_corners_on_marker(im, gt_corr[0][0] * float(marker_size))
-    #cv2.namedWindow('im_gt', cv2.WINDOW_NORMAL)
-    #cv2.imshow('im_gt', im_gt)
-    #key = cv2.waitKey(0)
-    
-    #if key == 27:    # Esc key to stop
-    #   sys.exit(0)
-    #cv2.destroyAllWindows()
+        # Display
+
+        #cv2.namedWindow('img', cv2.WINDOW_NORMAL)
+        #cv2.imshow('img', im_pred)
+
+        #im_gt = draw_corners_on_marker(im, gt_corr[0][0] * float(marker_size))
+        #cv2.namedWindow('im_gt', cv2.WINDOW_NORMAL)
+        #cv2.imshow('im_gt', im_gt)
+        #key = cv2.waitKey(0)
+        
+        #if key == 27:    # Esc key to stop
+        #   sys.exit(0)
+        #cv2.destroyAllWindows()

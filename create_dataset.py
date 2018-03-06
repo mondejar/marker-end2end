@@ -23,7 +23,7 @@ This code creates a file with:
 	- N transformations for each marker M over N different images 
 	- The 4 coordinates that enclose each marker M on the image	    		
 
-python marker_dataset_path img_dataset_path number_transforms patch_size
+python marker_dataset_path img_dataset_path number_transforms patchSize
 				
 Example call:
 
@@ -83,8 +83,8 @@ def dynamic_range_compression(img):
 
 
 def blurring(img):
-	x_value = random.uniform(1.0, 9.0)
-	y_value = random.uniform(1.0, 9.0)
+	x_value = random.uniform(1.0, 15.0)
+	y_value = random.uniform(1.0, 15.0)
 
 	img = cv2.blur(img, (int(x_value), int(y_value)), 0)
 
@@ -136,22 +136,24 @@ def create_dataset(marker_dataset, img_dataset, numWarps, patchSize, outImPath, 
 			imBackground = random.choice(imBackgrounds)
 			back_img = cv2.imread(img_dataset + imBackground, 0)
 
+			jump_loop = False
 			if not back_img is None:
 							
 				# Resample the background image to the double of patch size
-				train_img = cv2.resize(back_img, ( 2 * patchSize, 2 * patchSize)) 	
+				train_img = cv2.resize(back_img, ( 3 * patchSize, 3 * patchSize)) 	
 
 				# TODO: 
 				# Scale the marker at some size between 10-50% of the specified size
-				scale_factor = random.uniform(0.3, 0.7)#0.1, 0.5
+				scale_factor = random.uniform(0.2, 0.5)#0.1, 0.5
 				marker_size = int(patchSize * scale_factor)
+
 				marker_scale = cv2.resize(marker_orig, (marker_size, marker_size))
-
+				aux_patchSize = 3*patchSize
 				# 1 Put the marker in the image and add a white border
-				x_pos = np.random.randint(patchSize/2, (patchSize + patchSize/2) - marker_size - 1)
-				y_pos = np.random.randint(patchSize/2, (patchSize + patchSize/2) - marker_size - 1)		
+				x_pos = np.random.randint(patchSize, (patchSize*2) - marker_size)
+				y_pos = np.random.randint(patchSize, (patchSize*2) - marker_size)		
 
-				mask_img = np.zeros((2*patchSize, 2*patchSize))
+				mask_img = np.zeros((aux_patchSize, aux_patchSize))
 				whit_pix = int(marker_size * 0.1)
 
 				mask_img[x_pos:x_pos+marker_size, y_pos:y_pos+marker_size] = np.ones((marker_size, marker_size)) * 255
@@ -163,67 +165,43 @@ def create_dataset(marker_dataset, img_dataset, numWarps, patchSize, outImPath, 
 
 
 				# Apply affine transform and crop!
-				train_img, mask_img, marker_corners = affine_transform(train_img, mask_img, patch_size*2, marker_corners, 0.3)
+				train_img, mask_img, marker_corners = affine_transform(train_img, mask_img, aux_patchSize, marker_corners, 0.3)
+				marker_corners = marker_corners[0]
 
-				# Crop the generated regions
-				train_img = train_img[patch_size/5:(2*patch_size) -patch_size/5, patch_size/5:(2*patch_size) -patch_size/5]
-				mask_img = mask_img[patch_size/5:(2*patch_size) - patch_size/5, patch_size/5:(2*patch_size) -patch_size/5]			
-				marker_corners= marker_corners-int(patch_size/5)
+				# Crop the generated regions assuring that the marker is inside the region
+				#yx
+				min_xy = np.min(marker_corners, axis = 0)
+				max_xy = np.max(marker_corners, axis = 0)
+
+				if np.max(max_xy - min_xy) < patchSize:
+					random_crop_y = np.random.randint( int(max_xy[0] - patchSize),  np.min([int(min_xy[0]), aux_patchSize-patchSize]))
+					random_crop_x = np.random.randint( int(max_xy[1] - patchSize),  np.min([int(min_xy[1]), aux_patchSize-patchSize]))
+
+					train_img = train_img[random_crop_x:random_crop_x + patchSize, random_crop_y:random_crop_y + patchSize]
+					mask_img = mask_img[random_crop_x:random_crop_x + patchSize, random_crop_y:random_crop_y + patchSize]			
+					
+					marker_corners -= (random_crop_y, random_crop_x)
+
+				else:
+					jump_loop = True
+					continue
 
 
+				if train_img.shape != (patchSize, patchSize):
+					jump_loop = True
+					continue
 				# Add extra transforms:
+
+				# gray level?
+				train_img = dynamic_range_compression(train_img)
+
 				# Blurring
 				# Not apply always the bluring!
 				apply_blur = random.uniform(0.0, 1.0)
-				if apply_blur > 0.5:
+				if apply_blur > 0.3:
 					train_img = blurring(train_img)
 					
-
 				# Light ? 
-
-				cv2.namedWindow('train_img', cv2.WINDOW_NORMAL)
-				cv2.imshow('train_img',train_img)
-
-				cv2.namedWindow('mask_img', cv2.WINDOW_NORMAL)
-				cv2.imshow('mask_img', mask_img)
-				
-				cv2.namedWindow('mask_img_C', cv2.WINDOW_NORMAL)
-				cv2.imshow('mask_img_C', draw_corners_on_marker(train_img, marker_corners.flatten()))
-				cv2.waitKey(0)
-
-
-				# then apply the scale, dynamic, blurring, ilumination and affine transform!
-				
-
-
-
-				"""
-
-
-
-
-				# gray level?
-				marker_scale = dynamic_range_compression(marker_scale)
-
-				# blurring: to the marker or to the global image?
-
-				# Ilumination? non uniform?
-
-				# affine transform
-				white_border = 10 # pixels
-				marker_affin, persT, mask_perspect, image_corners, gt_corners = affine_transform(marker_size, white_border, marker_scale, 0.3)
-
-				rows_marker, cols_marker = marker_affin.shape
-			    # and place randomly over the background image
-				x_pos = np.random.randint(0, patchSize - cols_marker - 1)
-				y_pos = np.random.randint(0, patchSize - rows_marker - 1)				
-
-				train_img, mask_train_img = merge_images(train_img, x_pos, y_pos, marker_affin, mask_perspect, patchSize)
-
-
-				# Export the image and write the four corners on the file
-				gt_corners[:,0] = gt_corners[:,0] + x_pos
-				gt_corners[:,1] = gt_corners[:,1] + y_pos
 
 				# Last  numWarps - (train_val_factor * numWarps) for validation
 				if w > (numWarps - (train_val_factor * numWarps)):
@@ -234,7 +212,7 @@ def create_dataset(marker_dataset, img_dataset, numWarps, patchSize, outImPath, 
 					fileList_Val.write( nameTrainImg + ' ' + nameMaskImg)
 
 					for p in range(0, 4):	
-						fileList_Val.write(' ' + str(gt_corners[p][0]) + ' ' + str(gt_corners[p][1]))
+						fileList_Val.write(' ' + str(marker_corners[p][0]) + ' ' + str(marker_corners[p][1]))
 					fileList_Val.write('\n')
 
 				else:
@@ -245,13 +223,13 @@ def create_dataset(marker_dataset, img_dataset, numWarps, patchSize, outImPath, 
 					fileList_Train.write( nameTrainImg + ' ' + nameMaskImg)
 
 					for p in range(0, 4):	
-						fileList_Train.write(' ' + str(gt_corners[p][0]) + ' ' + str(gt_corners[p][1]))
+						fileList_Train.write(' ' + str(marker_corners[p][0]) + ' ' + str(marker_corners[p][1]))
 					fileList_Train.write('\n')	
 
 				# Export patch warp
 				cv2.imwrite( nameTrainImg, train_img)
 
-				cv2.imwrite( nameMaskImg, mask_train_img)	
+				cv2.imwrite( nameMaskImg, mask_img)	
 
 				# Export segmented mask!
 
@@ -260,11 +238,11 @@ def create_dataset(marker_dataset, img_dataset, numWarps, patchSize, outImPath, 
 					cv2.namedWindow('train_img', cv2.WINDOW_NORMAL)
 					cv2.imshow('train_img', train_img)
 
-					cv2.namedWindow('mask_train_img', cv2.WINDOW_NORMAL)
-					cv2.imshow('mask_train_img', mask_train_img)
+					cv2.namedWindow('mask_img', cv2.WINDOW_NORMAL)
+					cv2.imshow('mask_img', mask_img)
 
 					cv2.namedWindow('train_img_corners', cv2.WINDOW_NORMAL)
-					cv2.imshow('train_img_corners', draw_corners_on_marker(train_img, gt_corners.flatten()))
+					cv2.imshow('train_img_corners', draw_corners_on_marker(train_img, marker_corners.flatten()))
 
 					cv2.waitKey(0)
 					cv2.destroyAllWindows()
@@ -272,24 +250,16 @@ def create_dataset(marker_dataset, img_dataset, numWarps, patchSize, outImPath, 
 
 				if w % 1000 == 0:
 					print(str(w) + '/' + str(numWarps))
-				"""
+
 			else:
 				print("Warning: It could not be load background image: " + imBackground)
 				w = w-1
 
-
+			if jump_loop == True:
+				w = w-1
 	
 	fileList_Train.close()
 	fileList_Val.close()
-
-
-
-
-
-
-
-
-
 
 
 
@@ -298,16 +268,16 @@ if __name__ == "__main__":
 
 	# NOTE
 	# check this path dirs!
-	patch_size = 128
+	patchSize = 128
 
 	# Dir in which the new patches are saved 
-	outImPath = 'data/' + str(patch_size) +'/' 
+	outImPath = 'data/' + str(patchSize) +'/' 
 
 	# Full file path referencing the patches and ground truth
-	valFilename = 'data/' + str(patch_size) +'/val_data_list.txt' 
-	trainFilename = 'data/' + str(patch_size) +'/train_data_list.txt' 
+	valFilename = 'data/' + str(patchSize) +'/val_data_list.txt' 
+	trainFilename = 'data/' + str(patchSize) +'/train_data_list.txt' 
 
 	verbose = False	# set True to display the process
 
-	create_dataset('/home/mondejar/dataset/markers/', '/home/mondejar/dataset/mirflickr/', 50000, patch_size, outImPath, valFilename, trainFilename, verbose)
+	create_dataset('/home/mondejar/dataset/markers/', '/home/mondejar/dataset/mirflickr/', 50000, patchSize, outImPath, valFilename, trainFilename, verbose)
     

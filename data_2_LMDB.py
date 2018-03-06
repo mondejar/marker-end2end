@@ -167,7 +167,7 @@ def data_2_LMDB(dirBase, datasetFile, marker_size, output_dir, batch_size, two_c
 if __name__ == "__main__":
 
     dirBase = '/home/mondejar/markers_end2end/'
-    patch_size = 64#128
+    patch_size = 128
     batch_size = 1
     two_channels = False
     

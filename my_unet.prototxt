@@ -9,7 +9,7 @@ layer {
     scale: 0.00392156885937
   }
   data_param {
-    source: "/home/mondejar/markers_end2end/LMDB/64/training/markers_img_LMDB"
+    source: "/home/mondejar/markers_end2end/LMDB/128/training/markers_img_LMDB"
     batch_size: 1
     backend: LMDB
   }
@@ -25,7 +25,7 @@ layer {
     scale: 0.00392156885937
   }
   data_param {
-    source: "/home/mondejar/markers_end2end/LMDB/64/training/markers_labels_mask_LMDB"
+    source: "/home/mondejar/markers_end2end/LMDB/128/training/markers_labels_mask_LMDB"
     batch_size: 1
     backend: LMDB
   }
@@ -41,7 +41,7 @@ layer {
     scale: 0.00392156885937
   }
   data_param {
-    source: "/home/mondejar/markers_end2end/LMDB/64/validation/markers_img_LMDB"
+    source: "/home/mondejar/markers_end2end/LMDB/128/validation/markers_img_LMDB"
     batch_size: 1
     backend: LMDB
   }
@@ -57,7 +57,7 @@ layer {
     scale: 0.00392156885937
   }
   data_param {
-    source: "/home/mondejar/markers_end2end/LMDB/64/validation/markers_labels_mask_LMDB"
+    source: "/home/mondejar/markers_end2end/LMDB/128/validation/markers_labels_mask_LMDB"
     batch_size: 1
     backend: LMDB
   }
@@ -68,7 +68,7 @@ layer {
   bottom: "data"
   top: "conv1"
   convolution_param {
-    num_output: 32
+    num_output: 64
     pad: 1
     kernel_size: 3
     weight_filler {
@@ -99,7 +99,7 @@ layer {
   bottom: "pool2"
   top: "conv3"
   convolution_param {
-    num_output: 64
+    num_output: 128
     pad: 1
     kernel_size: 3
     weight_filler {
@@ -114,12 +114,61 @@ layer {
   top: "conv3"
 }
 layer {
+  name: "pool4"
+  type: "Pooling"
+  bottom: "conv3"
+  top: "pool4"
+  pooling_param {
+    pool: MAX
+    kernel_size: 3
+    stride: 2
+  }
+}
+layer {
+  name: "conv5"
+  type: "Convolution"
+  bottom: "pool4"
+  top: "conv5"
+  convolution_param {
+    num_output: 256
+    pad: 1
+    kernel_size: 3
+    weight_filler {
+      type: "xavier"
+    }
+  }
+}
+layer {
+  name: "relu5"
+  type: "ReLU"
+  bottom: "conv5"
+  top: "conv5"
+}
+layer {
+  name: "deconv7"
+  type: "Deconvolution"
+  bottom: "conv5"
+  top: "deconv7"
+  convolution_param {
+    num_output: 128
+    kernel_size: 2
+    stride: 2
+  }
+}
+layer {
+  name: "concat7"
+  type: "Concat"
+  bottom: "conv3"
+  bottom: "deconv7"
+  top: "concat7"
+}
+layer {
   name: "conv8"
   type: "Convolution"
-  bottom: "conv3"
+  bottom: "concat7"
   top: "conv8"
   convolution_param {
-    num_output: 64
+    num_output: 128
     pad: 1
     kernel_size: 3
     weight_filler {
@@ -139,7 +188,7 @@ layer {
   bottom: "conv8"
   top: "deconv9"
   convolution_param {
-    num_output: 32
+    num_output: 64
     kernel_size: 2
     stride: 2
   }
@@ -157,7 +206,7 @@ layer {
   bottom: "concat9"
   top: "conv10"
   convolution_param {
-    num_output: 32
+    num_output: 64
     pad: 1
     kernel_size: 3
     weight_filler {
@@ -177,7 +226,7 @@ layer {
   bottom: "conv10"
   top: "conv11"
   convolution_param {
-    num_output: 32
+    num_output: 64
     pad: 1
     kernel_size: 3
     weight_filler {

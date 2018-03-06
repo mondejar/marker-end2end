@@ -2,7 +2,6 @@ layer {
   name: "data"
   type: "Data"
   top: "data"
-  top: "data2"
   include {
     phase: TRAIN
   }
@@ -10,8 +9,8 @@ layer {
     scale: 0.00392156885937
   }
   data_param {
-    source: "/home/mondejar/markers_end2end/LMDB/64/training/markers_img_LMDB"
-    batch_size: 64
+    source: "/home/mondejar/markers_end2end/LMDB/128/training/markers_img_LMDB"
+    batch_size: 1
     backend: LMDB
   }
 }
@@ -19,13 +18,12 @@ layer {
   name: "label"
   type: "Data"
   top: "label"
-  top: "label2"
   include {
     phase: TRAIN
   }
   data_param {
-    source: "/home/mondejar/markers_end2end/LMDB/64/training/markers_labels_LMDB"
-    batch_size: 64
+    source: "/home/mondejar/markers_end2end/LMDB/128/training/markers_labels_LMDB"
+    batch_size: 1
     backend: LMDB
   }
 }
@@ -33,7 +31,6 @@ layer {
   name: "data"
   type: "Data"
   top: "data"
-  top: "data2"
   include {
     phase: TEST
   }
@@ -41,22 +38,21 @@ layer {
     scale: 0.00392156885937
   }
   data_param {
-    source: "/home/mondejar/markers_end2end/LMDB/64/validation/markers_img_LMDB"
-    batch_size: 64
+    source: "/home/mondejar/markers_end2end/LMDB/128/validation/markers_img_LMDB"
+    batch_size: 1
     backend: LMDB
   }
 }
 layer {
-  name: "label"
+  name: "test_label"
   type: "Data"
   top: "label"
-  top: "label2"
   include {
     phase: TEST
   }
   data_param {
-    source: "/home/mondejar/markers_end2end/LMDB/64/validation/markers_labels_LMDB"
-    batch_size: 64
+    source: "/home/mondejar/markers_end2end/LMDB/128/validation/markers_labels_LMDB"
+    batch_size: 1
     backend: LMDB
   }
 }
@@ -218,15 +214,9 @@ layer {
   }
 }
 layer {
-  name: "relu9"
-  type: "ReLU"
-  bottom: "fc1"
-  top: "fc1"
-}
-layer {
   name: "score"
   type: "InnerProduct"
-  bottom: "fc1"
+  bottom: "conv8"
   top: "score"
   inner_product_param {
     num_output: 8
